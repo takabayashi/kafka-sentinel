@@ -97,6 +97,15 @@ function App() {
             return updated.slice(0, 50);
           });
         }
+
+        if (message.topic === 'simulator_status') {
+          const status = message.data;
+          if (status.status === 'started') {
+            console.log(`✅ Scenario '${status.scenario}' started - ${status.description}`);
+          } else if (status.status === 'error') {
+            console.error(`❌ Scenario '${status.scenario}' failed:`, status.error);
+          }
+        }
       };
 
       setWs(currentWebSocket);

@@ -99,14 +99,31 @@ async function handleSimulatorAction(payload) {
     if (!response.ok) {
       const error = await response.json();
       console.error('[Simulator] Error response:', error);
-      throw new Error(error.error || 'Failed to trigger scenario');
+      broadcast('simulator_status', {
+        scenario: payload.scenario,
+        status: 'error',
+        error: error.error || 'Failed to trigger scenario'
+      });
+      return;
     }
 
     const result = await response.json();
     console.log('[Simulator] Scenario started:', result);
+
+    // Notify all clients that scenario started
+    broadcast('simulator_status', {
+      scenario: payload.scenario,
+      status: 'started',
+      description: result.description,
+      duration_seconds: result.duration_seconds
+    });
   } catch (error) {
     console.error('[Simulator] Failed to trigger scenario:', error.message);
-    // Don't throw - we don't want to crash the server
+    broadcast('simulator_status', {
+      scenario: payload.scenario,
+      status: 'error',
+      error: error.message
+    });
   }
 }
 
@@ -221,6 +238,7 @@ async function run() {
       'metrics_flattened',
       'velocity_anomaly_alerts',
       'enriched_alerts',
+      'simulator_events',
     ],
     fromBeginning: false,
   });

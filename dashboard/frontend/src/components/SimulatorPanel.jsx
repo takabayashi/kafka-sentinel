@@ -1,9 +1,50 @@
-import { useState, memo } from 'react';
+import { useState, memo, useEffect } from 'react';
 import './SimulatorPanel.css';
 
-const SimulatorPanel = memo(function SimulatorPanel({ onAction }) {
+const SimulatorPanel = memo(function SimulatorPanel({ onAction, ws }) {
   const [activeScenario, setActiveScenario] = useState(null);
   const [cooldown, setCooldown] = useState(false);
+  const [activeTab, setActiveTab] = useState('scenarios');
+  const [liveEvents, setLiveEvents] = useState([]);
+  const [simulatorStats, setSimulatorStats] = useState({
+    totalEvents: 0,
+    eventsPerSecond: 0,
+    lastEventTime: null
+  });
+
+  useEffect(() => {
+    if (!ws) return;
+
+    const handleMessage = (event) => {
+      const message = JSON.parse(event.data);
+
+      if (message.topic === 'simulator_events') {
+        const eventData = message.data.value;
+        setLiveEvents((prev) => {
+          const updated = [{
+            ...eventData,
+            timestamp: message.timestamp,
+            partition: message.data.partition,
+            offset: message.data.offset
+          }, ...prev];
+          return updated.slice(0, 100); // Keep last 100 events
+        });
+
+        setSimulatorStats(prev => ({
+          totalEvents: prev.totalEvents + 1,
+          lastEventTime: message.timestamp,
+          eventsPerSecond: prev.eventsPerSecond // Will be calculated separately
+        }));
+      }
+
+      if (message.topic === 'simulator_status') {
+        console.log('Simulator status:', message.data);
+      }
+    };
+
+    ws.addEventListener('message', handleMessage);
+    return () => ws.removeEventListener('message', handleMessage);
+  }, [ws]);
 
   const scenarios = [
     {

@@ -188,7 +188,7 @@ function App() {
         </div>
 
         <div className="panel simulator-panel">
-          <SimulatorPanel onAction={handleSimulatorAction} />
+          <SimulatorPanel onAction={handleSimulatorAction} ws={ws} />
         </div>
       </div>
     </div>

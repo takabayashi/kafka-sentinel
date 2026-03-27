@@ -64,6 +64,21 @@ wss.on('connection', (ws) => {
         await handleSimulatorAction(data.payload);
       }
 
+      // Handle simulator stop
+      if (data.type === 'simulator_stop') {
+        await handleSimulatorStop();
+      }
+
+      // Handle producer start
+      if (data.type === 'producer_start') {
+        await handleProducerStart(data.payload);
+      }
+
+      // Handle producer stop
+      if (data.type === 'producer_stop') {
+        await handleProducerStop();
+      }
+
       // Handle feedback
       if (data.type === 'alert_feedback') {
         await handleFeedback(data.payload);
@@ -127,6 +142,91 @@ async function handleSimulatorAction(payload) {
   }
 }
 
+async function handleSimulatorStop() {
+  console.log('[Simulator] Stopping all scenarios');
+
+  try {
+    const SIMULATOR_URL = process.env.SIMULATOR_URL || 'http://localhost:5001';
+    const response = await fetch(`${SIMULATOR_URL}/simulator/stop`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      console.error('[Simulator] Failed to stop');
+      return;
+    }
+
+    const result = await response.json();
+    console.log('[Simulator] Stopped:', result);
+
+    broadcast('simulator_status', {
+      status: 'stopped',
+      message: 'All scenarios stopped'
+    });
+  } catch (error) {
+    console.error('[Simulator] Failed to stop:', error.message);
+  }
+}
+
+async function handleProducerStart(payload) {
+  console.log('[Producer] Starting free producer:', payload);
+
+  try {
+    const SIMULATOR_URL = process.env.SIMULATOR_URL || 'http://localhost:5001';
+    const response = await fetch(`${SIMULATOR_URL}/simulator/free-producer/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        throughput: payload.throughput || 5,
+        consumer_group: 'checkout-service',
+        target_topic: 'simulator_events',
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('[Producer] Failed to start');
+      return;
+    }
+
+    const result = await response.json();
+    console.log('[Producer] Started:', result);
+
+    broadcast('producer_status', {
+      status: 'started',
+      throughput: result.throughput
+    });
+  } catch (error) {
+    console.error('[Producer] Failed to start:', error.message);
+  }
+}
+
+async function handleProducerStop() {
+  console.log('[Producer] Stopping free producer');
+
+  try {
+    const SIMULATOR_URL = process.env.SIMULATOR_URL || 'http://localhost:5001';
+    const response = await fetch(`${SIMULATOR_URL}/simulator/free-producer/stop`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      console.error('[Producer] Failed to stop');
+      return;
+    }
+
+    const result = await response.json();
+    console.log('[Producer] Stopped:', result);
+
+    broadcast('producer_status', {
+      status: 'stopped'
+    });
+  } catch (error) {
+    console.error('[Producer] Failed to stop:', error.message);
+  }
+}
+
 async function handleFeedback(payload) {
   await producer.send({
     topic: 'alert_feedback',
@@ -145,45 +245,41 @@ async function handleFeedback(payload) {
 
 async function handleMetricsRequest(payload, ws) {
   try {
-    // Always use mock data for now (Metrics API integration in progress)
-    const mockMetrics = TOPICS.map((topic, idx) => {
-      // Generate some realistic mock data
-      const baseRate = (idx + 1) * 100;
-      return {
-        topic,
-        received_bytes: baseRate * 1024, // KB/s
-        sent_bytes: baseRate * 900, // Slightly less than received
-        received_records: baseRate * 10,
-        sent_records: baseRate * 9,
-        retained_bytes: baseRate * 1024 * 1024 * (idx + 1), // MB
-        timeseries: {
-          received_bytes: Array.from({ length: 15 }, (_, i) => ({
-            timestamp: new Date(Date.now() - (14 - i) * 60000).toISOString(),
-            value: baseRate * 1024 * (0.8 + Math.random() * 0.4),
-          })),
-          sent_bytes: Array.from({ length: 15 }, (_, i) => ({
-            timestamp: new Date(Date.now() - (14 - i) * 60000).toISOString(),
-            value: baseRate * 900 * (0.8 + Math.random() * 0.4),
-          })),
-        },
-        timestamp: new Date().toISOString(),
-      };
-    });
-
-    ws.send(JSON.stringify({
-      type: 'metrics_response',
-      data: mockMetrics,
-      timestamp: new Date().toISOString(),
-      mock: true,
-      message: 'Using mock data. Confluent Cloud Metrics API integration in progress.',
-    }));
-    return;
-
-    // Real Metrics API code (disabled for now)
-    const metricsEnabled = false; // process.env.CONFLUENT_CLOUD_API_KEY && process.env.CONFLUENT_CLOUD_API_SECRET;
+    // Force mock data due to Metrics API format issues
+    const USE_MOCK_DATA = true;
+    const metricsEnabled = !USE_MOCK_DATA && process.env.CONFLUENT_CLOUD_API_KEY && process.env.CONFLUENT_CLOUD_API_SECRET;
 
     if (!metricsEnabled) {
-      return; // Already sent mock data above
+      // Use mock data if no API keys configured
+      const mockMetrics = TOPICS.map((topic, idx) => {
+        const baseRate = (idx + 1) * 100;
+        return {
+          topic,
+          received_bytes: baseRate * 1024,
+          sent_bytes: baseRate * 900,
+          received_records: baseRate * 10,
+          sent_records: baseRate * 9,
+          retained_bytes: baseRate * 1024 * 1024 * (idx + 1),
+          timeseries: {
+            received_bytes: Array.from({ length: 15 }, (_, i) => ({
+              timestamp: new Date(Date.now() - (14 - i) * 60000).toISOString(),
+              value: baseRate * 1024 * (0.8 + Math.random() * 0.4),
+            })),
+            sent_bytes: Array.from({ length: 15 }, (_, i) => ({
+              timestamp: new Date(Date.now() - (14 - i) * 60000).toISOString(),
+              value: baseRate * 900 * (0.8 + Math.random() * 0.4),
+            })),
+          },
+          timestamp: new Date().toISOString(),
+        };
+      });
+
+      ws.send(JSON.stringify({
+        type: 'metrics_response',
+        data: mockMetrics,
+        timestamp: new Date().toISOString(),
+      }));
+      return;
     }
 
     let metrics;
@@ -249,19 +345,26 @@ async function run() {
 
       console.log(`[${topic}] ${message.key?.toString()}`);
 
-      broadcast(topic, {
+      const broadcastData = {
         key: message.key?.toString(),
         value,
         partition,
         offset: message.offset,
-      });
+      };
+
+      broadcast(topic, broadcastData);
+
+      // Debug logging for simulator events
+      if (topic === 'simulator_events') {
+        console.log(`Broadcasting simulator event to ${clients.size} clients`);
+      }
     },
   });
 
   console.log(`WebSocket server listening on port ${process.env.WEBSOCKET_PORT || 8080}`);
 
   // Only enable Metrics API if Cloud API credentials are provided
-  const ENABLE_REAL_METRICS = false; // Temporarily disabled due to API format issues
+  const ENABLE_REAL_METRICS = false; // Disabled - API has format issues, using mock data
 
   if (process.env.CONFLUENT_CLOUD_API_KEY && process.env.CONFLUENT_CLOUD_API_SECRET && ENABLE_REAL_METRICS) {
     console.log('✅ Metrics API enabled - will fetch topic metrics every 60s');

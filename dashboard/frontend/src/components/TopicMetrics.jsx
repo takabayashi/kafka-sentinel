@@ -166,7 +166,6 @@ const TopicMetrics = memo(function TopicMetrics({ ws }) {
         </div>
         <span className="metrics-subtitle">
           Confluent Cloud Metrics API
-          {isMockData && <span className="mock-badge"> (Mock Data - Configure API Keys)</span>}
         </span>
       </div>
 

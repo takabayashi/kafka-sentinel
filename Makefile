@@ -2,6 +2,7 @@
 .PHONY: run-simulator run-velocity-monitor run-dashboard-backend run-dashboard-frontend run-dashboard
 .PHONY: config-simulator config-velocity-monitor config-dashboard-backend config-dashboard-frontend config-all
 .PHONY: dev start stop
+.PHONY: check-platform check-flink check-topics check-schemas check-service-account
 
 # Default target
 help:
@@ -30,6 +31,13 @@ help:
 	@echo "  make run-dashboard-backend    Run dashboard backend (WebSocket server)"
 	@echo "  make run-dashboard-frontend   Run dashboard frontend (React UI)"
 	@echo "  make run-dashboard            Run both dashboard backend & frontend"
+	@echo ""
+	@echo "🔍 PLATFORM HEALTH CHECK"
+	@echo "  make check-platform           Check all platform components (Flink, Kafka, Schema Registry)"
+	@echo "  make check-flink              Check Flink compute pool and statements"
+	@echo "  make check-topics             Check Kafka topics"
+	@echo "  make check-schemas            Check Schema Registry"
+	@echo "  make check-service-account    Check service account and permissions"
 	@echo ""
 	@echo "🧹 CLEANUP"
 	@echo "  make clean                    Remove all virtual envs and node_modules"
@@ -238,3 +246,26 @@ check-deps:
 	else \
 		echo "❌ dashboard frontend dependencies missing - run 'make install-dashboard-frontend'"; \
 	fi
+
+# ============================================================================
+# PLATFORM HEALTH CHECK
+# ============================================================================
+
+check-platform:
+	@./infra/check-platform-simple.sh
+
+check-flink:
+	@echo "🔍 Checking Flink infrastructure..."
+	@cd infra/terraform && terraform output flink_compute_pool_id && terraform output flink_catalog_tables
+
+check-topics:
+	@echo "🔍 Checking Kafka topics..."
+	@cd infra/terraform && terraform output topic_names
+
+check-schemas:
+	@echo "🔍 Checking Schema Registry..."
+	@echo "Run velocity-monitor to register schemas automatically"
+
+check-service-account:
+	@echo "🔍 Checking service account..."
+	@cd infra/terraform && terraform output flink_service_account_id

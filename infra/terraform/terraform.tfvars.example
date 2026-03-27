@@ -7,10 +7,29 @@
 confluent_cloud_api_key    = "YOUR_CLOUD_API_KEY"
 confluent_cloud_api_secret = "YOUR_CLOUD_API_SECRET"
 
+# Kafka API Credentials (cluster-level)
+# Get these from: Confluent Cloud Console > Cluster > API Keys
+# These are used by Terraform to create topics via Kafka REST API
+kafka_api_key    = "YOUR_KAFKA_API_KEY"
+kafka_api_secret = "YOUR_KAFKA_API_SECRET"
+
 # Confluent Cloud Resource IDs
-# Get these from: Confluent Cloud Console > Environments > [Your Environment] > Clusters
-environment_id = "env-xxxxx"  # Example: env-12345
-cluster_id     = "lkc-xxxxx"  # Example: lkc-67890
+# Get these from: Confluent Cloud Console
+environment_id = "env-xxxxx"  # Environments > [Your Environment]
+cluster_id     = "lkc-xxxxx"  # Cluster ID from cluster overview
+
+# Flink API Credentials (region-specific for compute pool)
+# Get these from: Confluent Cloud Console > Flink > Compute Pools > API Keys
+# Create API key for the specific compute pool region
+flink_api_key    = "YOUR_FLINK_API_KEY"
+flink_api_secret = "YOUR_FLINK_API_SECRET"
+
+# Schema Registry API Credentials
+# Get these from: Confluent Cloud Console > Schema Registry > API Keys
+schema_registry_api_key    = "YOUR_SCHEMA_REGISTRY_API_KEY"
+schema_registry_api_secret = "YOUR_SCHEMA_REGISTRY_API_SECRET"
+
+# NOTE: Organization ID and Flink Service Account are created automatically by Terraform
 
 # Optional: Override default retention (7 days)
 # topic_retention_ms = "604800000"

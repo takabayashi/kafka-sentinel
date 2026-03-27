@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ConsumerGroupMetrics",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cluster_id": {
+      "type": "string"
+    },
+    "consumer_group": {
+      "type": "string"
+    },
+    "topic": {
+      "type": "string"
+    },
+    "current_lag": {
+      "type": "integer"
+    },
+    "read_speed": {
+      "type": "number"
+    },
+    "write_speed": {
+      "type": "number"
+    },
+    "time_to_catchup_seconds": {
+      "type": "number"
+    },
+    "partition_skew_score": {
+      "type": "number"
+    },
+    "lag_24h_avg": {
+      "type": "number"
+    },
+    "lag_percentile_95_24h": {
+      "type": "number"
+    },
+    "partition_count": {
+      "type": "integer"
+    },
+    "partitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "partition_id": {
+            "type": "integer"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "lag": {
+            "type": "integer"
+          },
+          "consumed_offset": {
+            "type": "integer"
+          },
+          "log_end_offset": {
+            "type": "integer"
+          }
+        },
+        "required": ["partition_id", "topic", "lag", "consumed_offset", "log_end_offset"]
+      }
+    }
+  },
+  "required": [
+    "timestamp",
+    "cluster_id",
+    "consumer_group",
+    "topic",
+    "current_lag",
+    "read_speed",
+    "write_speed",
+    "time_to_catchup_seconds",
+    "partition_skew_score",
+    "lag_24h_avg",
+    "lag_percentile_95_24h",
+    "partition_count",
+    "partitions"
+  ]
+}

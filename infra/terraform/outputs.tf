@@ -30,3 +30,28 @@ output "topic_names" {
     alert_feedback          = confluent_kafka_topic.alert_feedback.topic_name
   }
 }
+
+output "flink_service_account_id" {
+  description = "Flink Service Account ID"
+  value       = confluent_service_account.flink.id
+}
+
+output "flink_compute_pool_id" {
+  description = "Flink Compute Pool ID (use with deploy-flink-statements.sh)"
+  value       = confluent_flink_compute_pool.main.id
+}
+
+output "flink_rest_endpoint" {
+  description = "Flink REST API endpoint"
+  value       = local.flink_rest_endpoint
+}
+
+output "flink_catalog_tables" {
+  description = "Flink catalog table statement names"
+  value = {
+    metrics_source            = confluent_flink_statement.create_metrics_source.statement_name
+    metrics_flattened         = confluent_flink_statement.create_metrics_flattened.statement_name
+    velocity_anomaly_alerts   = confluent_flink_statement.create_alerts_table.statement_name
+  }
+}
+

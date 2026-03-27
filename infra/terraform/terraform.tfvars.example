@@ -1,0 +1,22 @@
+# Confluent Cloud Configuration Example
+# Copy this file to terraform.tfvars and fill in your actual values
+
+# Confluent Cloud API Credentials
+# Get these from: Confluent Cloud Console > Account & Access > Cloud API Keys
+# These are for Terraform infrastructure management, NOT for Kafka data access
+confluent_cloud_api_key    = "YOUR_CLOUD_API_KEY"
+confluent_cloud_api_secret = "YOUR_CLOUD_API_SECRET"
+
+# Confluent Cloud Resource IDs
+# Get these from: Confluent Cloud Console > Environments > [Your Environment] > Clusters
+environment_id = "env-xxxxx"  # Example: env-12345
+cluster_id     = "lkc-xxxxx"  # Example: lkc-67890
+
+# Optional: Override default retention (7 days)
+# topic_retention_ms = "604800000"
+
+# Optional: Override environment tag
+# environment = "demo"
+
+# Optional: Override project name tag
+# project_name = "ifood-anomaly-detection"

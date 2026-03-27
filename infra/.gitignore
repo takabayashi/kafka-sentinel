@@ -1,0 +1,24 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform directories
+.terraform/
+.terraform.lock.hcl
+
+# Variable files with sensitive data
+*.tfvars
+!*.tfvars.example
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Credentials
+*.key
+*.pem
+
+# OS files
+.DS_Store

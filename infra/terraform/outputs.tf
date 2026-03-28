@@ -55,3 +55,10 @@ output "flink_catalog_tables" {
   }
 }
 
+output "flink_arima_jobs" {
+  description = "Flink ARIMA anomaly detection jobs"
+  value = {
+    lag_trending_up = confluent_flink_statement.arima_lag_trending_up.statement_name
+  }
+}
+

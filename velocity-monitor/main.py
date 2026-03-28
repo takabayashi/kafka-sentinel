@@ -65,9 +65,12 @@ class VelocityMonitor:
             try:
                 metrics = self._compute_group_metrics(group_id)
                 if metrics:
+                    logger.info(f"Publishing metrics for {group_id}: lag={metrics.get('current_lag')}")
                     self.publisher.publish(metrics)
+                else:
+                    logger.debug(f"No metrics for {group_id} (no lag data)")
             except Exception as e:
-                logger.error(f"Failed to process group {group_id}: {e}")
+                logger.error(f"Failed to process group {group_id}: {e}", exc_info=True)
 
         self.publisher.flush(timeout=5.0)
 

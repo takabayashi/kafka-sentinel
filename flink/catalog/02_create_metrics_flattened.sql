@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS metrics_flattened (
-  `event_time` TIMESTAMP(3),
+  `event_time` STRING,
   `cluster_id` STRING,
   `consumer_group` STRING,
   `topic` STRING,
@@ -13,11 +13,12 @@ CREATE TABLE IF NOT EXISTS metrics_flattened (
   `partition_count` INT,
   `lag_velocity` DOUBLE,
   `speed_ratio` DOUBLE,
-  `is_falling_behind` BOOLEAN,
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '30' SECONDS
+  `is_falling_behind` BOOLEAN
 ) WITH (
   'connector' = 'confluent',
   'kafka.cleanup-policy' = 'delete',
   'kafka.retention.time' = '7 d',
-  'value.format' = 'json-registry'
+  'value.format' = 'json-registry',
+  'scan.bounded.mode' = 'unbounded',
+  'scan.startup.mode' = 'earliest-offset'
 );

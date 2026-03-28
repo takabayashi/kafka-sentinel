@@ -3,7 +3,7 @@
 This Terraform configuration provisions the complete infrastructure for Kafka Sentinel:
 - 7 Kafka topics
 - Flink Compute Pool
-- 7 Flink SQL anomaly detection statements
+- 3 Flink catalog tables (metrics_source, metrics_flattened, velocity_anomaly_alerts)
 
 ## Prerequisites
 
@@ -16,6 +16,8 @@ This Terraform configuration provisions the complete infrastructure for Kafka Se
 **Note:** Terraform will automatically create:
 - Flink Service Account
 - Role bindings (FlinkDeveloper, DeveloperRead, DeveloperWrite, Schema Registry access)
+- Flink Compute Pool (5 CFUs max)
+- 3 Flink catalog table definitions
 
 ## Topics Provisioned
 
@@ -80,14 +82,14 @@ cd infra/terraform
 # Initialize Terraform and download providers
 terraform init
 
-# Preview changes (creates: 7 topics + 1 compute pool + 7 Flink statements)
+# Preview changes (creates: 7 topics + 1 compute pool + 3 catalog tables)
 terraform plan
 
 # Apply configuration
 terraform apply
 
 # NOTE: Flink compute pool takes ~2-3 minutes to provision
-# Flink statements will deploy sequentially after pool is ready
+# Catalog table statements will deploy sequentially after pool is ready
 ```
 
 **Expected resources created:**
@@ -95,9 +97,10 @@ terraform apply
 - 4 Role Bindings (FlinkDeveloper, DeveloperRead, DeveloperWrite, Schema Registry)
 - 7 Kafka topics
 - 1 Flink Compute Pool (5 CFUs max)
-- 7 Flink SQL statements (1 formatting + 6 detection rules)
+- 3 Flink Catalog Tables (metrics_source, metrics_flattened, velocity_anomaly_alerts)
+- 1 time_sleep resource (wait for Flink ready)
 
-**Total: 20 resources**
+**Total: 17 resources**
 
 ### Step 6: Export Configuration for Applications
 
@@ -134,26 +137,28 @@ export FLINK_POOL_ID=$(terraform output -raw flink_compute_pool_id)
    confluent flink compute-pool list
    ```
 
-### Verify Flink Statements
+### Verify Flink Catalog Tables
 
 1. **Console**: Environment → Flink → Statements
-   - Should show 7 statements, all **RUNNING**
-   - Order: formatting → 6 detection rules
+   - Should show 3 catalog table statements, all **RUNNING**
+   - Tables: metrics_source, metrics_flattened, velocity_anomaly_alerts
 
 2. **CLI**:
    ```bash
    confluent flink statement list --compute-pool $FLINK_POOL_ID
    ```
 
+**Note:** Anomaly detection jobs (ARIMA rules) will be deployed separately after validating the data flow.
+
 ### Test Data Flow
 
 1. Start **velocity-monitor** to publish metrics
 2. Wait ~30 seconds for data to flow
-3. Check `metrics_flattened` topic has data:
+3. Check `metrics_source` topic has data:
    ```bash
-   confluent kafka topic consume metrics_flattened --from-beginning | head -10
+   confluent kafka topic consume metrics_source --from-beginning | head -10
    ```
-4. Trigger anomaly with **simulator** lag_spike scenario
+4. Once ARIMA jobs are deployed, trigger anomaly with **simulator** lag_spike scenario
 5. Wait ~2 minutes (ARIMA training window)
 6. Check for alerts:
    ```bash
@@ -190,12 +195,12 @@ terraform destroy
 
 ## Next Steps
 
-After topics are provisioned:
+After infrastructure is provisioned:
 
-1. **Create Kafka API Keys** for applications
-2. **Configure Velocity Monitor** to publish to `metrics_source`
-3. **Configure Data Simulator** to publish to `simulator_events`
-4. **Set up Flink SQL pipeline** to read from `metrics_source` and write to `velocity_anomaly_alerts`
+1. ✅ **Create Kafka API Keys** for applications
+2. ✅ **Configure Velocity Monitor** to publish to `metrics_source` (with Schema Registry integration)
+3. **Deploy Flink ARIMA Jobs** to detect anomalies and write to `velocity_anomaly_alerts`
+4. **Configure Data Simulator** to publish to `simulator_events` for demo scenarios
 5. **Deploy AI Agent** to enrich alerts using `agent_memory` context
 6. **Launch Dashboard UI** to visualize metrics and alerts
 

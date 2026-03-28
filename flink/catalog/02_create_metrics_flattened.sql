@@ -16,9 +16,5 @@ CREATE TABLE metrics_flattened (
   `is_falling_behind` BOOLEAN
 ) WITH (
   'connector' = 'confluent',
-  'kafka.cleanup-policy' = 'delete',
-  'kafka.retention.time' = '7 d',
-  'value.format' = 'json-registry',
-  'scan.bounded.mode' = 'unbounded',
-  'scan.startup.mode' = 'earliest-offset'
+  'value.format' = 'json-registry'
 );

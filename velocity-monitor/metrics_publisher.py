@@ -21,8 +21,8 @@ class MetricsPublisher:
         if not sr_api_key or not sr_api_secret:
             raise ValueError("SCHEMA_REGISTRY_API_KEY and SCHEMA_REGISTRY_API_SECRET must be set in .env")
 
-        # Load JSON schema
-        schema_path = Path(__file__).parent / "metrics_schema.json"
+        # Load JSON schema for metrics_flattened
+        schema_path = Path(__file__).parent / "metrics_flattened_schema.json"
         with open(schema_path) as f:
             schema_str = f.read()
 

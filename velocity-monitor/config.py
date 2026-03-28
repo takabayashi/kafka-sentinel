@@ -23,7 +23,7 @@ def load_kafka_config() -> Dict[str, Any]:
         "kafka_rest_endpoint": config["kafka_rest_endpoint"]["value"],
         "cluster_id": config["cluster_id"]["value"],
         "environment_id": config["environment_id"]["value"],
-        "metrics_topic": config["topic_names"]["value"]["metrics_source"],
+        "metrics_topic": config["topic_names"]["value"]["metrics_flattened"],
     }
 
 

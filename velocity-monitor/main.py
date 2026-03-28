@@ -104,6 +104,11 @@ class VelocityMonitor:
         topic_name = lag_data[0].get("topic_name", "unknown") if lag_data else "unknown"
 
         read_speed, write_speed = self.metrics_storage.compute_speeds(group_id, total_consumed_offset, total_log_end_offset, timestamp)
+
+        # Compute lag velocity BEFORE recording new lag value
+        lag_velocity = self.metrics_storage.compute_lag_velocity(group_id, total_lag)
+
+        # Record current state for next iteration
         self.metrics_storage.record(group_id, total_lag, total_consumed_offset, total_log_end_offset, timestamp)
 
         lag_24h_avg = self.metrics_storage.get_lag_average_24h(group_id)
@@ -112,8 +117,12 @@ class VelocityMonitor:
         partition_skew_score = self._compute_partition_skew(partition_lags)
         time_to_catchup = total_lag / read_speed if read_speed > 0 else 0
 
+        # Compute derived metrics for Flink pipeline
+        speed_ratio = (read_speed / write_speed) if write_speed > 0 else 1.0
+        is_falling_behind = read_speed < write_speed
+
         metrics = {
-            "timestamp": timestamp.isoformat() + "Z",
+            "event_time": timestamp.isoformat() + "Z",
             "cluster_id": self.cluster_id,
             "consumer_group": group_id,
             "topic": topic_name,
@@ -125,7 +134,9 @@ class VelocityMonitor:
             "lag_24h_avg": round(lag_24h_avg, 2),
             "lag_percentile_95_24h": round(lag_percentile_95, 2),
             "partition_count": len(partition_details),
-            "partitions": partition_details
+            "lag_velocity": round(lag_velocity, 2),
+            "speed_ratio": round(speed_ratio, 2),
+            "is_falling_behind": is_falling_behind
         }
 
         logger.debug(f"Group {group_id}: lag={total_lag}, read_speed={read_speed:.2f} msg/s, write_speed={write_speed:.2f} msg/s, skew={partition_skew_score:.2f}")

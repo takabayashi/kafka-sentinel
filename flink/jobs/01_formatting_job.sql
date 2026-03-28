@@ -13,7 +13,7 @@
 
 INSERT INTO metrics_flattened
 SELECT
-  event_time,
+  `timestamp` AS event_time,
   cluster_id,
   consumer_group,
   topic,
@@ -30,7 +30,7 @@ SELECT
     current_lag - COALESCE(
       LAG(current_lag, 1) OVER (
         PARTITION BY consumer_group
-        ORDER BY event_time
+        ORDER BY TO_TIMESTAMP(`timestamp`)
       ),
       current_lag
     ) AS DOUBLE

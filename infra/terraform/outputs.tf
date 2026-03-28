@@ -55,10 +55,3 @@ output "flink_catalog_tables" {
   }
 }
 
-output "flink_jobs" {
-  description = "Flink job statement names"
-  value = {
-    formatting-job = confluent_flink_statement.formatting_job.statement_name
-  }
-}
-

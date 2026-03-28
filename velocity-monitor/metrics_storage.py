@@ -14,6 +14,11 @@ class MetricsWindow:
         self.lag_history[group_id].append((timestamp, lag))
         self._cleanup_old_entries(group_id, timestamp)
 
+        # Store current lag for velocity calculation
+        if group_id not in self.last_state:
+            self.last_state[group_id] = {}
+        self.last_state[group_id]['last_lag'] = lag
+
     def _cleanup_old_entries(self, group_id: str, current_time: datetime):
         cutoff = current_time - timedelta(seconds=self.window_size)
         while self.lag_history[group_id] and self.lag_history[group_id][0][0] < cutoff:
@@ -55,3 +60,12 @@ class MetricsWindow:
             return 0.0
         index = int(len(lags) * 0.95)
         return lags[min(index, len(lags) - 1)]
+
+    def compute_lag_velocity(self, group_id: str, current_lag: int) -> float:
+        """
+        Compute lag velocity (rate of change of lag).
+        Returns the difference between current lag and previous lag.
+        """
+        last_state = self.last_state.get(group_id, {})
+        previous_lag = last_state.get('last_lag', current_lag)
+        return float(current_lag - previous_lag)

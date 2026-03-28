@@ -44,33 +44,4 @@ SELECT
     'window_size_minutes' VALUE 10,
     'model_type' VALUE 'ARIMA'
   ) AS context
-FROM (
-  SELECT
-    *,
-    ML_DETECT_ANOMALIES(
-      current_lag,
-      -- ARIMA configuration
-      MAP[
-        'algorithm', 'ARIMA',
-        'p', '3',              -- Auto-regressive terms
-        'd', '1',              -- Differencing order
-        'q', '2',              -- Moving average terms
-        'seasonality', '12',   -- Seasonal period (~2 min at 10s intervals)
-        'threshold', '0.5',    -- Anomaly threshold
-        'training_window', '100'  -- Last 100 data points (~16 minutes)
-      ]
-    ) OVER (
-      PARTITION BY consumer_group
-      ORDER BY TO_TIMESTAMP(event_time)
-      ROWS BETWEEN 100 PRECEDING AND CURRENT ROW
-    ) AS anomaly_data
-  FROM metrics_flattened
-  WHERE current_lag > 0  -- Only analyze groups with lag
-)
-WHERE
-  -- Filter: Only emit alerts when anomaly detected
-  anomaly_data.is_anomaly = TRUE
-  -- Filter: Only when lag is actually increasing
-  AND lag_velocity > 0
-  -- Filter: Minimum lag threshold (avoid noise on low-lag groups)
-  AND current_lag > 1000;
+FROM metrics_flattened;

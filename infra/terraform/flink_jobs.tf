@@ -22,7 +22,7 @@ resource "confluent_flink_statement" "formatting_job" {
   }
 
   statement  = file("${path.module}/../../flink/jobs/01_formatting_job.sql")
-  statement_name = "formatting_job"
+  statement_name = "formatting-job"
   rest_endpoint = local.flink_rest_endpoint
 
   credentials {

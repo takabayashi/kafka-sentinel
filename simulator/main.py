@@ -149,8 +149,8 @@ def run_scenario(scenario_name):
 
     # Get scenario parameters from request
     data = request.json or {}
-    consumer_group = data.get('consumer_group', 'checkout-service')
-    target_topic = data.get('target_topic', 'orders')
+    consumer_group = data.pop('consumer_group', 'checkout-service')
+    target_topic = data.pop('target_topic', 'orders')
 
     # Run scenario in background thread
     def run_in_background():

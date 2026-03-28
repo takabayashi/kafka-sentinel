@@ -1,4 +1,4 @@
-CREATE TABLE metrics_flattened (
+CREATE TABLE IF NOT EXISTS metrics_flattened (
   `event_time` STRING,
   `cluster_id` STRING,
   `consumer_group` STRING,

@@ -13,7 +13,7 @@ SELECT
   CONCAT(
     'arima_lag_up_',
     consumer_group, '_',
-    CAST(UNIX_TIMESTAMP(TO_TIMESTAMP(event_time)) AS STRING)
+    CAST(UNIX_TIMESTAMP(event_time) AS STRING)
   ) AS alert_id,
   TO_TIMESTAMP(event_time) AS alert_time,
   'arima_lag_up' AS detection_type,
@@ -44,4 +44,29 @@ SELECT
     'window_size_minutes' VALUE 10,
     'model_type' VALUE 'ARIMA'
   ) AS context
-FROM metrics_flattened;
+FROM (
+  SELECT
+    event_time,
+    cluster_id,
+    consumer_group,
+    topic,
+    current_lag,
+    read_speed,
+    write_speed,
+    time_to_catchup_seconds,
+    partition_skew_score,
+    lag_velocity,
+    ML_DETECT_ANOMALIES(
+      CAST(current_lag AS DOUBLE),
+      TO_TIMESTAMP(event_time),
+      '{"algorithm":"ARIMA","p":3,"d":1,"q":2,"seasonality":12,"threshold":0.5,"training_window":100}'
+    ) OVER (
+      PARTITION BY consumer_group
+      ORDER BY TO_TIMESTAMP(event_time)
+      ROWS BETWEEN 100 PRECEDING AND CURRENT ROW
+    ) AS anomaly_data
+  FROM metrics_flattened
+  WHERE current_lag > 1000
+    AND lag_velocity > 0
+)
+WHERE anomaly_data.is_anomaly = TRUE;
